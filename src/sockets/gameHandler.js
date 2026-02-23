@@ -1,7 +1,6 @@
 import { medicalDeck } from "../data/medicalDeck.js";
 
 export const registerGameHandlers = (io, socket, roomManager) => {
-  
   const broadcastUpdate = (roomCode) => {
     const room = roomManager.getRoom(roomCode);
     if (room) {
@@ -14,19 +13,19 @@ export const registerGameHandlers = (io, socket, roomManager) => {
     const room = roomManager.getRoom(roomCode);
     if (!room) return;
 
-    const leavingPlayer = room.players.find(p => p.id === socket.id);
+    const leavingPlayer = room.players.find((p) => p.id === socket.id);
     if (!leavingPlayer) return;
 
-    room.players = room.players.filter(p => p.id !== socket.id);
+    room.players = room.players.filter((p) => p.id !== socket.id);
 
     if (room.players.length === 0) {
       roomManager.deleteRoom(roomCode);
       console.log(`🧹 Sala ${roomCode} eliminada.`);
     } else {
       if (leavingPlayer.role === "host") room.players[0].role = "host";
-      
+
       if (room.gameStarted && room.turnData) {
-        room.turnData.playerIds = room.players.map(p => p.id);
+        room.turnData.playerIds = room.players.map((p) => p.id);
         room.turnData.currentIndex = 0;
         io.to(roomCode).emit("next-turn", room.turnData.playerIds[0]);
       }
@@ -46,32 +45,35 @@ export const registerGameHandlers = (io, socket, roomManager) => {
     socket.join(roomCode);
 
     socket.emit("room-created", {
-        roomCode,
-        players: room.players,
-        settings: room.settings,
-        });
+      roomCode,
+      players: room.players,
+      settings: room.settings,
     });
+  });
 
   socket.on("join-room", ({ name, roomCode }) => {
     const room = roomManager.getRoom(roomCode);
     if (room) {
       if (room.players.length < room.settings.maxPlayers) {
         // Evitar duplicados por ID o Nombre
-        room.players = room.players.filter(p => p.id !== socket.id && p.name !== name);
-        
+        room.players = room.players.filter(
+          (p) => p.id !== socket.id && p.name !== name,
+        );
+
         socket.join(roomCode);
         room.players.push({ id: socket.id, name, role: "doctor" });
-        
-        socket.emit("room-joined", { 
-          roomCode, 
-          currentPlayers: room.players, 
-          settings: room.settings 
-        });
-        
+        setTimeout(() => {
+          socket.emit("room-joined", {
+            roomCode,
+            players: room.players,
+            settings: room.settings,
+          });
+          broadcastUpdate(roomCode);
+        }, 100);
         broadcastUpdate(roomCode);
-        socket.to(roomCode).emit("system-message", { 
-          text: `DR. ${name.toUpperCase()} SE UNIÓ.`, 
-          type: "join" 
+        socket.to(roomCode).emit("system-message", {
+          text: `DR. ${name.toUpperCase()} SE UNIÓ.`,
+          type: "join",
         });
       } else {
         socket.emit("error-message", "La sala está llena.");
@@ -84,7 +86,9 @@ export const registerGameHandlers = (io, socket, roomManager) => {
   socket.on("update-settings", ({ roomCode, settings }) => {
     const room = roomManager.getRoom(roomCode);
     if (room) {
-      const isHost = room.players.find(p => p.id === socket.id && p.role === "host");
+      const isHost = room.players.find(
+        (p) => p.id === socket.id && p.role === "host",
+      );
       if (isHost) {
         room.settings = { ...room.settings, ...settings };
         io.to(roomCode).emit("settings-updated", room.settings);
@@ -95,36 +99,47 @@ export const registerGameHandlers = (io, socket, roomManager) => {
   socket.on("start-game", (roomCode) => {
     const room = roomManager.getRoom(roomCode);
     if (room && room.players.length >= 3) {
-      const selectedSet = medicalDeck[Math.floor(Math.random() * medicalDeck.length)];
+      const selectedSet =
+        medicalDeck[Math.floor(Math.random() * medicalDeck.length)];
       const impostorIndex = Math.floor(Math.random() * room.players.length);
-      
+
       room.gameStarted = true;
-      room.turnData = { currentIndex: 0, playerIds: room.players.map(p => p.id) };
+      room.turnData = {
+        currentIndex: 0,
+        playerIds: room.players.map((p) => p.id),
+      };
 
       room.players.forEach((player, i) => {
-        io.to(player.id).emit('game-started', {
-          role: i === impostorIndex ? 'impostor' : 'doctor',
-          word: i === impostorIndex ? selectedSet.clue : selectedSet.word
+        io.to(player.id).emit("game-started", {
+          role: i === impostorIndex ? "impostor" : "doctor",
+          word: i === impostorIndex ? selectedSet.clue : selectedSet.word,
         });
       });
-      
+
       console.log(`🎮 Partida en ${roomCode}: ${selectedSet.word}`);
-      setTimeout(() => io.to(roomCode).emit("next-turn", room.turnData.playerIds[0]), 5000);
+      setTimeout(
+        () => io.to(roomCode).emit("next-turn", room.turnData.playerIds[0]),
+        5000,
+      );
     }
   });
 
-    socket.on("advance-turn", (roomCode) => {
+  socket.on("advance-turn", (roomCode) => {
     const room = roomManager.getRoom(roomCode);
     if (room && room.turnData) {
-        const currentTurnId = room.turnData.playerIds[room.turnData.currentIndex];
-        const isHost = room.players.find(p => p.id === socket.id && p.role === "host");
-        if (socket.id === currentTurnId || isHost) {
-        room.turnData.currentIndex = (room.turnData.currentIndex + 1) % room.turnData.playerIds.length;
-        const nextPlayerId = room.turnData.playerIds[room.turnData.currentIndex];
+      const currentTurnId = room.turnData.playerIds[room.turnData.currentIndex];
+      const isHost = room.players.find(
+        (p) => p.id === socket.id && p.role === "host",
+      );
+      if (socket.id === currentTurnId || isHost) {
+        room.turnData.currentIndex =
+          (room.turnData.currentIndex + 1) % room.turnData.playerIds.length;
+        const nextPlayerId =
+          room.turnData.playerIds[room.turnData.currentIndex];
         io.to(roomCode).emit("next-turn", nextPlayerId);
-        }
+      }
     }
-    });
+  });
 
   socket.on("stop-game", (roomCode) => {
     const room = roomManager.getRoom(roomCode);
@@ -136,7 +151,7 @@ export const registerGameHandlers = (io, socket, roomManager) => {
   });
 
   socket.on("leave-room", (roomCode) => handleLeave(roomCode));
-  
+
   socket.on("disconnect", () => {
     const roomCode = roomManager.findRoomByPlayerId(socket.id);
     if (roomCode) handleLeave(roomCode);
