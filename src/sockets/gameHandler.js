@@ -40,14 +40,17 @@ export const registerGameHandlers = (io, socket, roomManager) => {
     socket.leave(roomCode);
   };
 
-  // --- EVENTOS ---
-
   socket.on("create-room", ({ name }) => {
     const roomCode = roomManager.createRoom(socket.id, name);
     const room = roomManager.getRoom(roomCode);
     socket.join(roomCode);
-    socket.emit("room-created", { roomCode, ...room });
-  });
+
+    socket.emit("room-created", {
+        roomCode,
+        players: room.players,
+        settings: room.settings,
+        });
+    });
 
   socket.on("join-room", ({ name, roomCode }) => {
     const room = roomManager.getRoom(roomCode);
@@ -115,8 +118,6 @@ export const registerGameHandlers = (io, socket, roomManager) => {
     if (room && room.turnData) {
         const currentTurnId = room.turnData.playerIds[room.turnData.currentIndex];
         const isHost = room.players.find(p => p.id === socket.id && p.role === "host");
-
-        // Solo el jugador del turno actual o el HOST pueden pasar de turno
         if (socket.id === currentTurnId || isHost) {
         room.turnData.currentIndex = (room.turnData.currentIndex + 1) % room.turnData.playerIds.length;
         const nextPlayerId = room.turnData.playerIds[room.turnData.currentIndex];
