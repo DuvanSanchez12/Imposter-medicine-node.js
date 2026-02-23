@@ -110,14 +110,20 @@ export const registerGameHandlers = (io, socket, roomManager) => {
     }
   });
 
-  socket.on("advance-turn", (roomCode) => {
+    socket.on("advance-turn", (roomCode) => {
     const room = roomManager.getRoom(roomCode);
-    if (room?.turnData) {
-      room.turnData.currentIndex = (room.turnData.currentIndex + 1) % room.turnData.playerIds.length;
-      const nextPlayerId = room.turnData.playerIds[room.turnData.currentIndex];
-      io.to(roomCode).emit("next-turn", nextPlayerId);
+    if (room && room.turnData) {
+        const currentTurnId = room.turnData.playerIds[room.turnData.currentIndex];
+        const isHost = room.players.find(p => p.id === socket.id && p.role === "host");
+
+        // Solo el jugador del turno actual o el HOST pueden pasar de turno
+        if (socket.id === currentTurnId || isHost) {
+        room.turnData.currentIndex = (room.turnData.currentIndex + 1) % room.turnData.playerIds.length;
+        const nextPlayerId = room.turnData.playerIds[room.turnData.currentIndex];
+        io.to(roomCode).emit("next-turn", nextPlayerId);
+        }
     }
-  });
+    });
 
   socket.on("stop-game", (roomCode) => {
     const room = roomManager.getRoom(roomCode);
