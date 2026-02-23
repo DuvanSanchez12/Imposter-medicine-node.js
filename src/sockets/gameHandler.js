@@ -1,6 +1,6 @@
 /* eslint-disable import/no-anonymous-default-export */
-import { getRoom, setTurnData, advanceTurn, resetGame } from "../models/roomModel";
-import { getRandomCard } from "../data/medicalDeck";
+import { getRoom, setTurnData, advanceTurn, resetGame } from "../models/roomModel.js";
+import { getRandomCard } from "../data/medicalDeck.js";
 
 const registerGameHandlers = (io, socket) => {
 
