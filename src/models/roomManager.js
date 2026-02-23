@@ -1,41 +1,63 @@
-export class RoomManager {
-  constructor() {
-    this.rooms = {};
-  }
+const rooms = {};
+const getRoom = (roomCode) => rooms[roomCode] ?? null;
+const getRoomBySocketId = (socketId) =>
+  Object.entries(rooms).find(([, room]) =>
+    room.players.some((p) => p.id === socketId)
+  ) ?? null;
 
-  // Genera el código de 5 caracteres tal cual lo hacía el original
-  generateCode() {
-    const code = Math.random().toString(36).substring(2, 7).toUpperCase();
-    return this.rooms[code] ? this.generateCode() : code;
-  }
+const createRoom = (roomCode, hostId, hostName) => {
+  rooms[roomCode] = {
+    players: [{ id: hostId, name: hostName, role: "host" }],
+    gameStarted: false,
+    settings: { maxPlayers: 5, timePerPerson: 60 },
+    turnData: null,
+  };
+  return rooms[roomCode];
+};
 
-  getRoom(code) {
-    return this.rooms[code];
-  }
+const addPlayer = (roomCode, player) => {
+  rooms[roomCode].players.push(player);
+};
 
-  // Al crear la sala, inicializamos con los valores por defecto del original
-  createRoom(hostId, hostName) {
-    const code = this.generateCode();
-    this.rooms[code] = {
-      players: [{ id: hostId, name: hostName, role: "host" }],
-      gameStarted: false,
-      settings: { 
-        maxPlayers: 5, 
-        timePerPerson: 60 
-      },
-      turnData: null
-    };
-    return code;
-  }
+const removePlayer = (roomCode, socketId) => {
+  rooms[roomCode].players = rooms[roomCode].players.filter(
+    (p) => p.id !== socketId
+  );
+};
 
-  deleteRoom(code) {
-    delete this.rooms[code];
-  }
+const deleteRoom = (roomCode) => {
+  delete rooms[roomCode];
+};
 
-  // Buscador de sala por ID de socket (esencial para el disconnect)
-  findRoomByPlayerId(playerId) {
-    return Object.keys(this.rooms).find(code => 
-      this.rooms[code].players.some(p => p.id === playerId)
-    );
-  }
-}
+const updateSettings = (roomCode, newSettings) => {
+  rooms[roomCode].settings = { ...rooms[roomCode].settings, ...newSettings };
+};
+
+const setTurnData = (roomCode, playerIds) => {
+  rooms[roomCode].turnData = { currentIndex: 0, playerIds };
+};
+
+const advanceTurn = (roomCode) => {
+  const { turnData } = rooms[roomCode];
+  turnData.currentIndex =
+    (turnData.currentIndex + 1) % turnData.playerIds.length;
+  return turnData.playerIds[turnData.currentIndex];
+};
+
+const resetGame = (roomCode) => {
+  rooms[roomCode].gameStarted = false;
+  rooms[roomCode].turnData = null;
+};
+
+module.exports = {
+  getRoom,
+  getRoomBySocketId,
+  createRoom,
+  addPlayer,
+  removePlayer,
+  deleteRoom,
+  updateSettings,
+  setTurnData,
+  advanceTurn,
+  resetGame,
+};
