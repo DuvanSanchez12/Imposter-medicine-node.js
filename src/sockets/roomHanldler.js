@@ -1,14 +1,5 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
-const {
-  getRoom,
-  getRoomBySocketId,
-  createRoom,
-  addPlayer,
-  removePlayer,
-  deleteRoom,
-  updateSettings,
-  setTurnData,
-} = require("../models/roomManager");
+/* eslint-disable import/no-anonymous-default-export */
+import { getRoom, getRoomBySocketId, createRoom, addPlayer, removePlayer, deleteRoom, updateSettings, setTurnData } from "../models/roomManager";
 const broadcastUpdate = (io, roomCode) => {
   const room = getRoom(roomCode);
   if (!room) return;
@@ -116,4 +107,4 @@ const registerRoomHandlers = (io, socket) => {
   });
 };
 
-module.exports = { registerRoomHandlers };
+export default { registerRoomHandlers };

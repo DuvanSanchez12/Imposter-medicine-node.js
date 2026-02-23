@@ -1,3 +1,4 @@
+/* eslint-disable import/no-anonymous-default-export */
 const rooms = {};
 const getRoom = (roomCode) => rooms[roomCode] ?? null;
 const getRoomBySocketId = (socketId) =>
@@ -49,7 +50,7 @@ const resetGame = (roomCode) => {
   rooms[roomCode].turnData = null;
 };
 
-module.exports = {
+export default {
   getRoom,
   getRoomBySocketId,
   createRoom,

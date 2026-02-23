@@ -1,13 +1,12 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
-const express = require("express");
-const http = require("http");
-const { Server } = require("socket.io");
-const cors = require("cors");
-const { registerRoomHandlers } = require("./src/sockets/roomHanldler");
-const { registerGameHandlers } = require("./src/sockets/gameHandler");
+import express from "express";
+import { createServer } from "http";
+import { Server } from "socket.io";
+import cors from "cors";
+import { registerRoomHandlers } from "./src/sockets/roomHanldler";
+import { registerGameHandlers } from "./src/sockets/gameHandler";
 const app = express();
 app.use(cors());
-const server = http.createServer(app);
+const server = createServer(app);
 
 const io = new Server(server, {
   cors: {

@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
-const { getRoom, setTurnData, advanceTurn, resetGame } = require("../models/roomManager");
-const { getRandomCard } = require("../data/medicalDeck");
+/* eslint-disable import/no-anonymous-default-export */
+import { getRoom, setTurnData, advanceTurn, resetGame } from "../models/roomManager";
+import { getRandomCard } from "../data/medicalDeck";
 
 const registerGameHandlers = (io, socket) => {
 
@@ -52,4 +52,4 @@ const registerGameHandlers = (io, socket) => {
   });
 };
 
-module.exports = { registerGameHandlers };
+export default { registerGameHandlers };
