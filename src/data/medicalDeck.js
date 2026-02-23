@@ -1,5 +1,4 @@
-/* eslint-disable import/no-anonymous-default-export */
-const medicalDeck = [
+export const medicalDeck = [
   { word: "Diabetes", clue: "Metabolismo" },
   { word: "EPOC", clue: "Moco" },
   { word: "Lesión prerrenal", clue: "Hipoperfusión" },
@@ -102,7 +101,5 @@ const medicalDeck = [
   { word: "Anquilosis", clue: "Fusión articular" },
 ];
 
-const getRandomCard = () =>
+export const getRandomCard = () =>
   medicalDeck[Math.floor(Math.random() * medicalDeck.length)];
-
-export default { medicalDeck, getRandomCard };

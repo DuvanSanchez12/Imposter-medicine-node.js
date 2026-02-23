@@ -2,10 +2,12 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import cors from "cors";
-import { registerRoomHandlers } from "./src/sockets/roomHanldler";
-import { registerGameHandlers } from "./src/sockets/gameHandler";
+import { registerRoomHandlers } from "./src/sockets/roomHandler.js";
+import { registerGameHandlers } from "./src/sockets/gameHandler.js";
+
 const app = express();
 app.use(cors());
+
 const server = createServer(app);
 
 const io = new Server(server, {
@@ -14,14 +16,12 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
   },
 });
-
 io.on("connection", (socket) => {
   console.log(`🔌 Socket conectado: ${socket.id}`);
 
   registerRoomHandlers(io, socket);
   registerGameHandlers(io, socket);
 });
-
 const PORT = process.env.PORT || 4000;
 server.listen(PORT, () => {
   console.log(`🚀 SERVIDOR MÉDICO CORRIENDO EN http://localhost:${PORT}`);

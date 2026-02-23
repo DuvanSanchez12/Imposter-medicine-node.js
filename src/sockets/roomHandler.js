@@ -1,17 +1,18 @@
-/* eslint-disable import/no-anonymous-default-export */
-import { getRoom, setTurnData, advanceTurn, resetGame } from "../models/roomModel";
-import { getRandomCard } from "../data/medicalDeck";
+import { getRoom, setTurnData, advanceTurn, resetGame } from "../models/roomModel.js";
+import { getRandomCard } from "../data/medicalDeck.js";
 
-const registerGameHandlers = (io, socket) => {
+export const registerGameHandlers = (io, socket) => {
 
   socket.on("start-game", (roomCode) => {
     const room = getRoom(roomCode);
     if (!room || room.players.length < 3) return;
 
     room.gameStarted = true;
+
     const card = getRandomCard();
     const impostorIndex = Math.floor(Math.random() * room.players.length);
     const impostorId = room.players[impostorIndex].id;
+
     setTurnData(roomCode, room.players.map((p) => p.id));
 
     room.players.forEach((player) => {
@@ -21,6 +22,7 @@ const registerGameHandlers = (io, socket) => {
         word: isImpostor ? card.clue : card.word,
       });
     });
+
     setTimeout(() => {
       io.to(roomCode).emit("next-turn", room.turnData.playerIds[0]);
     }, 5000);
@@ -38,6 +40,7 @@ const registerGameHandlers = (io, socket) => {
     const isHost = room.players.find(
       (p) => p.id === socket.id && p.role === "host"
     );
+
     if (socket.id !== currentTurnId && !isHost) return;
 
     const nextPlayerId = advanceTurn(roomCode);
@@ -51,5 +54,3 @@ const registerGameHandlers = (io, socket) => {
     io.to(roomCode).emit("game-ended");
   });
 };
-
-export default { registerGameHandlers };
