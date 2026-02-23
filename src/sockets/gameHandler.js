@@ -17,18 +17,29 @@ export const registerGameHandlers = (io, socket) => {
         word: isImpostor ? card.clue : card.word,
       });
     });
+
     setTimeout(() => {
       io.to(roomCode).emit("next-turn", room.turnData.playerIds[0]);
     }, 5000);
+
+    console.log(
+      `🎮 Partida iniciada en ${roomCode}. Palabra: ${card.word} | Pista Impostor: ${card.clue}`
+    );
   });
 
   socket.on("advance-turn", (roomCode) => {
     const room = getRoom(roomCode);
     if (!room || !room.turnData) return;
+
     const currentTurnId = room.turnData.playerIds[room.turnData.currentIndex];
-    const isHost = room.players.find((p) => p.id === socket.id && p.role === "host");
+    const isHost = room.players.find(
+      (p) => p.id === socket.id && p.role === "host"
+    );
+
     if (socket.id !== currentTurnId && !isHost) return;
-    io.to(roomCode).emit("next-turn", advanceTurn(roomCode));
+
+    const nextPlayerId = advanceTurn(roomCode);
+    io.to(roomCode).emit("next-turn", nextPlayerId);
   });
 
   socket.on("stop-game", (roomCode) => {
